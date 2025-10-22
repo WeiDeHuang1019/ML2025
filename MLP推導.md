@@ -199,3 +199,154 @@ $
 ---
 
 
+
+
+
+
+
+
+
+
+# 🧠 MLP 反向傳播（非矩陣形式推導）
+
+考慮一個兩層的多層感知器 (MLP)：
+
+輸入層 → 隱藏層 → 輸出層  
+權重與偏置如下：
+
+- 隱藏層：  
+  $begin:math:text$ z_j^{(1)} = \\sum_i W_{ji}^{(1)} x_i + b_j^{(1)} $end:math:text$  
+  $begin:math:text$ h_j = f(z_j^{(1)}) $end:math:text$
+
+- 輸出層：  
+  $begin:math:text$ z_k^{(2)} = \\sum_j W_{kj}^{(2)} h_j + b_k^{(2)} $end:math:text$  
+  $begin:math:text$ y_k = g(z_k^{(2)}) $end:math:text$
+
+---
+
+## **1️⃣ 損失函數 (Mean Squared Error)**
+
+$begin:math:display$
+L = \\frac{1}{2} \\sum_{k=1}^{K} (y_k - t_k)^2
+$end:math:display$
+
+---
+
+## **2️⃣ 輸出層誤差項 δ**
+
+對每個輸出層神經元 $begin:math:text$k$end:math:text$：
+
+$begin:math:display$
+\\delta_k^{(2)} = \\frac{\\partial L}{\\partial z_k^{(2)}} = (y_k - t_k) \\, g'(z_k^{(2)})
+$end:math:display$
+
+> 若輸出層為線性輸出（$begin:math:text$ g'(z) = 1 $end:math:text$），則：
+> $begin:math:display$
+> \\delta_k^{(2)} = y_k - t_k
+> $end:math:display$
+
+---
+
+## **3️⃣ 輸出層權重與偏置的梯度**
+
+對每一條連線 $begin:math:text$ W_{kj}^{(2)} $end:math:text$：
+
+$begin:math:display$
+\\frac{\\partial L}{\\partial W_{kj}^{(2)}} = \\delta_k^{(2)} \\, h_j
+$end:math:display$
+
+對每一個輸出層偏置：
+
+$begin:math:display$
+\\frac{\\partial L}{\\partial b_k^{(2)}} = \\delta_k^{(2)}
+$end:math:display$
+
+---
+
+## **4️⃣ 隱藏層的誤差項 δ**
+
+對每個隱藏層神經元 $begin:math:text$ j $end:math:text$：
+
+$begin:math:display$
+\\delta_j^{(1)} = f'(z_j^{(1)}) \\sum_{k} W_{kj}^{(2)} \\, \\delta_k^{(2)}
+$end:math:display$
+
+這表示第 $begin:math:text$ j $end:math:text$ 個隱藏層神經元的誤差，是由所有連到輸出層的誤差信號反傳後加權求和，再乘上激勵函數導數。
+
+---
+
+## **5️⃣ 隱藏層權重與偏置的梯度**
+
+對每一條連線 $begin:math:text$ W_{ji}^{(1)} $end:math:text$：
+
+$begin:math:display$
+\\frac{\\partial L}{\\partial W_{ji}^{(1)}} = \\delta_j^{(1)} \\, x_i
+$end:math:display$
+
+對每一個隱藏層偏置：
+
+$begin:math:display$
+\\frac{\\partial L}{\\partial b_j^{(1)}} = \\delta_j^{(1)}
+$end:math:display$
+
+---
+
+## **6️⃣ 參數更新（以梯度下降為例）**
+
+設學習率為 $begin:math:text$ \\eta $end:math:text$：
+
+$begin:math:display$
+W_{kj}^{(2)} \\leftarrow W_{kj}^{(2)} - \\eta \\, \\frac{\\partial L}{\\partial W_{kj}^{(2)}}
+$end:math:display$
+$begin:math:display$
+b_k^{(2)} \\leftarrow b_k^{(2)} - \\eta \\, \\frac{\\partial L}{\\partial b_k^{(2)}}
+$end:math:display$
+$begin:math:display$
+W_{ji}^{(1)} \\leftarrow W_{ji}^{(1)} - \\eta \\, \\frac{\\partial L}{\\partial W_{ji}^{(1)}}
+$end:math:display$
+$begin:math:display$
+b_j^{(1)} \\leftarrow b_j^{(1)} - \\eta \\, \\frac{\\partial L}{\\partial b_j^{(1)}}
+$end:math:display$
+
+---
+
+## **7️⃣ 總結 Backpropagation（逐節點形式）**
+
+1. **Forward pass**
+   $begin:math:display$
+   z_j^{(1)} = \\sum_i W_{ji}^{(1)} x_i + b_j^{(1)}, \\quad h_j = f(z_j^{(1)})
+   $end:math:display$
+   $begin:math:display$
+   z_k^{(2)} = \\sum_j W_{kj}^{(2)} h_j + b_k^{(2)}, \\quad y_k = g(z_k^{(2)})
+   $end:math:display$
+
+2. **Compute loss**
+   $begin:math:display$
+   L = \\frac{1}{2} \\sum_k (y_k - t_k)^2
+   $end:math:display$
+
+3. **Backward pass**
+   $begin:math:display$
+   \\delta_k^{(2)} = (y_k - t_k) g'(z_k^{(2)})
+   $end:math:display$
+   $begin:math:display$
+   \\frac{\\partial L}{\\partial W_{kj}^{(2)}} = \\delta_k^{(2)} h_j, \\quad
+   \\frac{\\partial L}{\\partial b_k^{(2)}} = \\delta_k^{(2)}
+   $end:math:display$
+   $begin:math:display$
+   \\delta_j^{(1)} = f'(z_j^{(1)}) \\sum_k W_{kj}^{(2)} \\delta_k^{(2)}
+   $end:math:display$
+   $begin:math:display$
+   \\frac{\\partial L}{\\partial W_{ji}^{(1)}} = \\delta_j^{(1)} x_i, \\quad
+   \\frac{\\partial L}{\\partial b_j^{(1)}} = \\delta_j^{(1)}
+   $end:math:display$
+
+---
+
+✅ 如此一來，整個反向傳播過程都以**逐節點、逐權重的標量形式**推導完成，不依賴任何矩陣或向量表示。  
+這樣的形式也方便直接實作成巢狀 `for` 迴圈版本的程式。
+✅ 如此一來，整個反向傳播過程都以逐節點、逐權重的標量形式推導完成，不依賴任何矩陣或向量表示。
+這樣的形式也方便直接實作成巢狀 for 迴圈版本的程式。
+
+
+
