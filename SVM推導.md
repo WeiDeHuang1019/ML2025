@@ -114,7 +114,7 @@ $$
 
 ---
 
-## 最終 SVM 目標函數
+## 目標與約束
 
 $$
 \begin{aligned}
@@ -122,3 +122,56 @@ $$
 \text{s.t. } & y_i(w \cdot x_i + b) \ge 1, \quad \forall i
 \end{aligned}
 $$
+
+這是一個 帶不等式限制條件 (inequality constraints) 的最小化問題。
+我們要最小化 $\frac{1}{2}\|w\|^2$ ，但又要同時滿足約束條件: $y_i(w \cdot x_i + b) \ge 1, \quad \forall i$。
+
+---
+## Lagrange 運算子
+如果沒有約束，我們可以直接對 \(w,b\) 求導取極值。  
+但現在有約束條件：
+
+$$
+g_i(w,b) = 1 - y_i(w\cdot x_i + b) \le 0
+$$
+
+要處理這種「有條件」的最小化，就需要用 **Lagrange 乘子法 (Lagrange Multiplier Method)**。  
+
+
+### Lagrangian 的構造方式
+
+一般形式：
+
+$$
+\mathcal{L}(x,\alpha) = f(x) + \sum_i \alpha_i g_i(x),
+\quad \alpha_i \ge 0
+$$
+
+當 $\(g_i(x)\le 0\)$（條件滿足）時，懲罰項對結果沒有影響；  
+若 $\(g_i(x) > 0\)$（條件違反），則該項會讓 $\(\mathcal{L}\)$ 增大，  
+從而「懲罰」違反條件的情況。
+
+
+### 套用到 SVM 的具體形式
+
+- 目標函數：
+
+$$
+f(w,b) = \frac{1}{2}\|w\|^2
+$$
+
+- 約束條件：
+
+$$
+1 - y_i(w\cdot x_i + b) \le 0
+$$
+
+因此構造 Lagrangian：
+
+$$
+\boxed{
+\mathcal{L}(w,b,\alpha)
+= \frac{1}{2}\|w\|^2 - \sum_{i=1}^{m} \alpha_i\big[\,y_i(w\cdot x_i + b) - 1\,\big]}
+$$
+
+---
