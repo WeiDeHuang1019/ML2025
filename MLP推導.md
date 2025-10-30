@@ -11,9 +11,9 @@
 
 對第 (j) 個隱藏層神經元：
 
-$$z_j = \sum_{i=1}^{N} w_{ji}^{(1)} x_i + b_j^{(1)}$$
+$$u_j = \sum_{i=1}^{N} w_{ji}^{(1)} x_i + b_j^{(1)}$$
 
-$h_j = f(z_j)$
+$$h_j = f(u_j)$$
 
 * $w_{ji}^{(1)}$：輸入層到隱藏層的權重
 * $b_j^{(1)}$：隱藏層神經元的 bias
@@ -33,17 +33,17 @@ $\mathbf{h} \in \mathbb{R}^K ; W^{(1)} \in \mathbb{R}^{K \times N}$
 
 對第 (k) 個輸出神經元：
 
-$$o_k = \sum_{j=1}^{K} w_{kj}^{(2)} h_j + b_k^{(2)}$$
+$$z_k = \sum_{j=1}^{K} w_{kj}^{(2)} h_j + b_k^{(2)}$$
 
 如果輸出層要做分類（4 個類別），通常會接 **softmax**：
 
-$$y_k = \frac{e^{o_k}}{\sum_{m=1}^{4} e^{o_m}}, \quad k = 1,2,3,4$$
+$$y_k = \frac{e^{z_k}}{\sum_{m=1}^{4} e^{z_m}}, \quad k = 1,2,3,4$$
 
 矩陣化後：
 
-$\mathbf{o} = W^{(2)} \mathbf{h} + \mathbf{b}^{(2)}\$
+$\mathbf{z} = W^{(2)} \mathbf{h} + \mathbf{b}^{(2)}\$
 
-$$\mathbf{y} = \text{softmax}(\mathbf{o})$$
+$$\mathbf{y} = \text{softmax}(\mathbf{z})$$
 
 其中：
 $\mathbf{y} \in \mathbb{R}^4$ 為預測的類別機率分佈
@@ -56,12 +56,12 @@ $\mathbf{y} \in \mathbb{R}^4$ 為預測的類別機率分佈
    $\mathbf{h} = f\big(W^{(1)} \mathbf{x} + \mathbf{b}^{(1)}\big)$
 
 2. **隱藏層到輸出層：**
-   $\mathbf{o} = W^{(2)} \mathbf{h} + \mathbf{b}^{(2)}, \quad \mathbf{y} = \text{softmax}(\mathbf{o})$
+   $\mathbf{z} = W^{(2)} \mathbf{h} + \mathbf{b}^{(2)}, \quad \mathbf{y} = \text{softmax}(\mathbf{z})$
 
 ---
 
 
-# MLP 反向傳播 (Back Propagation)** 的公式流程 
+# MLP 反向傳播 (Back Propagation) 的公式流程 
 
 考慮一個兩層的多層感知器 (MLP)：
 
@@ -69,8 +69,8 @@ $\mathbf{y} \in \mathbb{R}^4$ 為預測的類別機率分佈
 權重與偏置如下：
 
 隱藏層：  <br>
-$z_j^{(1)} = \sum_i W_{ji}^{(1)} x_i + b_j^{(1)}$  
-$h_j = f(z_j^{(1)})$
+$u_j^{(1)} = \sum_i W_{ji}^{(1)} x_i + b_j^{(1)}$  
+$h_j = f(u_j^{(1)})$
 
 輸出層： <br>
 $z_k^{(2)} = \sum_j W_{kj}^{(2)} h_j + b_k^{(2)}$  
@@ -81,78 +81,138 @@ $y_k = g(z_k^{(2)})$
 ### **1. 損失函數 (Mean Squared Error)**
 
 $$ L = \frac{1}{2} \sum_{k=1}^{K} (y_k - t_k)^2 $$
+我們要求：
+$$
+\frac{\partial L}{\partial w_{kj}^{(2)}},    \frac{\partial L}{\partial w_{kj}^{(1)}}
+$$
 
 ---
+### **2. 輸出層 → 隱藏層**
+#### 套用鏈式法則 (Chain Rule)
 
-### **2. 輸出層誤差項 δ**
+先觀察：
 
-對每個輸出層神經元 $k$：
+$$
+L \to y_k \to z_k^{(2)} \to w_{kj}^{(2)}
+$$
 
-$$ \delta_k^{(2)} = \frac{\partial L}{\partial z_k^{(2)}} = (y_k - t_k) \, g'(z_k^{(2)}) $$
+因此：
 
-> 若輸出層為線性輸出（$g'(z) = 1$），則：  
-> $\delta_k^{(2)} = y_k - t_k$
+$$
+\frac{\partial L}{\partial w_{kj}^{(2)}} 
+= \frac{\partial L}{\partial y_k} 
+  \cdot \frac{\partial y_k}{\partial z_k^{(2)}}
+  \cdot \frac{\partial z_k^{(2)}}{\partial w_{kj}^{(2)}}
+$$
+
+#### 各部分分開計算
+
+- (a) 損失對輸出：
+
+$$
+\frac{\partial L}{\partial y_k} = (y_k - t_k)
+$$
+
+- (b) 輸出對輸入：
+
+$$
+\frac{\partial y_k}{\partial z_k^{(2)}} = g'(z_k^{(2)})
+$$
+
+- (c) 輸入對權重：
+
+$$
+z_k^{(2)} = \sum_{j=1}^{K} w_{kj}^{(2)} h_j + b_k^{(2)} 
+\Rightarrow \frac{\partial z_k^{(2)}}{\partial w_{kj}^{(2)}} = h_j
+$$
+
+
+#### 三者相乘得到結果
+
+$$
+\boxed{
+\frac{\partial L}{\partial w_{kj}^{(2)}} 
+= (y_k - t_k)\cdot g'(z_k^{(2)}) \cdot h_j
+}
+$$
+
+> 若輸出層為線性輸出（ $g'(z) = 1$ ），則：  
+> $\boxed{\frac{\partial L}{\partial w_{kj}^{(2)}} = (y_k - t_k)\cdot h_j}$
 
 ---
+### **3. 隱藏層 → 輸入層**
 
-### **3. 輸出層權重與偏置的梯度**
+沿著計算圖的依賴關係：
 
-對每一條連線 $W_{kj}^{(2)}$：
+$$
+L \to y_k \to z_k^{(2)} \to h_j \to z_j^{(1)} \to w_{ji}^{(1)}
+$$
 
-$$ \frac{\partial L}{\partial W_{kj}^{(2)}} = \delta_k^{(2)} \, h_j $$
+對任意輸出節點 \(k\)：
 
-對每一個輸出層偏置：
+$$
+\frac{\partial L}{\partial w_{ji}^{(1)}}
+= \sum_{k=1}^{4}
+\underbrace{\frac{\partial L}{\partial y_k}}_{(a)}
+\cdot
+\underbrace{\frac{\partial y_k}{\partial z_k^{(2)}}}_{(b)}
+\cdot
+\underbrace{\frac{\partial z_k^{(2)}}{\partial h_j}}_{(c)}
+\cdot
+\underbrace{\frac{\partial h_j}{\partial z_j^{(1)}}}_{(d)}
+\cdot
+\underbrace{\frac{\partial z_j^{(1)}}{\partial w_{ji}^{(1)}}}_{(e)}
+$$
 
-$$ \frac{\partial L}{\partial b_k^{(2)}} = \delta_k^{(2)} $$
+分別計算五個局部梯度：
 
----
+- (a) 損失對輸出：
+  
+$$
+\frac{\partial L}{\partial y_k} = (y_k - t_k)
+$$
+- (b) 輸出對其輸入：
+  
+$$
+\frac{\partial y_k}{\partial z_k^{(2)}} = g'\big(z_k^{(2)}\big)
+$$
+- (c) 輸出層線性組合對 \(h_j\)：
 
-### **4. 隱藏層的誤差項 δ**
+$$
+\frac{\partial z_k^{(2)}}{\partial h_j} = w_{kj}^{(2)}
+$$
+- (d) 隱藏激勵的導數：
+  
+$$
+\frac{\partial h_j}{\partial z_j^{(1)}} = f'\big(z_j^{(1)}\big)
+$$
+- (e) 隱藏層線性組合對第一層權重：
+  
+$$
+\frac{\partial z_j^{(1)}}{\partial w_{ji}^{(1)}} = x_i
+$$
 
-對每個隱藏層神經元 $j$：
+將它們相乘並對 \(k\) 加總：
 
-$$ \delta_j^{(1)} = f'(z_j^{(1)}) \sum_{k} W_{kj}^{(2)} \, \delta_k^{(2)} $$
+$$
+\frac{\partial L}{\partial w_{ji}^{(1)}}
+= \left[\sum_{k=1}^{4} (y_k - t_k)\cdot g'\big(z_k^{(2)}\big)\cdot w_{kj}^{(2)} \right]
+\cdot f'\big(z_j^{(1)}\big)\cdot x_i
+$$
 
----
-
-### **5. 隱藏層權重與偏置的梯度**
-
-對每一條連線 $W_{ji}^{(1)}$：
-
-$$ \frac{\partial L}{\partial W_{ji}^{(1)}} = \delta_j^{(1)} \, x_i $$
-
-對每一個隱藏層偏置：
-
-$$ \frac{\partial L}{\partial b_j^{(1)}} = \delta_j^{(1)} $$
-
----
 
 ### **6. 參數更新（以梯度下降為例）**
 
 設學習率為 $\eta$：
 
-$$ W_{kj}^{(2)} \leftarrow W_{kj}^{(2)} - \eta \, \frac{\partial L}{\partial W_{kj}^{(2)}} $$  
-$$ b_k^{(2)} \leftarrow b_k^{(2)} - \eta \, \frac{\partial L}{\partial b_k^{(2)}} $$  
-$$ W_{ji}^{(1)} \leftarrow W_{ji}^{(1)} - \eta \, \frac{\partial L}{\partial W_{ji}^{(1)}} $$  
-$$ b_j^{(1)} \leftarrow b_j^{(1)} - \eta \, \frac{\partial L}{\partial b_j^{(1)}} $$
+$$ W_{kj}^{(2)} \leftarrow W_{kj}^{(2)} - \eta  \frac{\partial L}{\partial W_{kj}^{(2)}} $$  
+$$ b_k^{(2)} \leftarrow b_k^{(2)} - \eta  \frac{\partial L}{\partial b_k^{(2)}} $$  
+$$ W_{ji}^{(1)} \leftarrow W_{ji}^{(1)} - \eta  \frac{\partial L}{\partial W_{ji}^{(1)}} $$  
+$$ b_j^{(1)} \leftarrow b_j^{(1)} - \eta  \frac{\partial L}{\partial b_j^{(1)}} $$
 
 ---
 
-### **7. 總結 Backpropagation（逐節點形式）**
 
-1. **Forward pass**  
-   $$z_j^{(1)} = \sum_i W_{ji}^{(1)} x_i + b_j^{(1)}, \quad h_j = f(z_j^{(1)})$$  
-   $$z_k^{(2)} = \sum_j W_{kj}^{(2)} h_j + b_k^{(2)}, \quad y_k = g(z_k^{(2)})$$
 
-2. **Compute loss**  
-   $$L = \frac{1}{2} \sum_k (y_k - t_k)^2$$
-
-3. **Backward pass**  
-   $$\delta_k^{(2)} = (y_k - t_k) g'(z_k^{(2)})$$  
-   $$\frac{\partial L}{\partial W_{kj}^{(2)}} = \delta_k^{(2)} h_j, \quad \frac{\partial L}{\partial b_k^{(2)}} = \delta_k^{(2)}$$  
-   $$\delta_j^{(1)} = f'(z_j^{(1)}) \sum_k W_{kj}^{(2)} \delta_k^{(2)}$$  
-   $$\frac{\partial L}{\partial W_{ji}^{(1)}} = \delta_j^{(1)} x_i, \quad \frac{\partial L}{\partial b_j^{(1)}} = \delta_j^{(1)}$$
-
----
 
 
